@@ -17,6 +17,7 @@ class GotrInfoOverlay extends OverlayPanel
 	private static final Color WARN = new Color(255, 170, 40);
 	private static final Color BAD = new Color(240, 70, 70);
 	private static final Color MUTED = new Color(170, 170, 170);
+	private static final Color CREDIT = new Color(170, 90, 255);
 
 	private final GotrAssistantPlugin plugin;
 	private final GotrAssistantConfig config;
@@ -40,7 +41,7 @@ class GotrInfoOverlay extends OverlayPanel
 		}
 
 		panelComponent.getChildren().add(TitleComponent.builder().text("GOTR Assistant").color(config.targetColor()).build());
-		panelComponent.getChildren().add(TitleComponent.builder().text("by POWERBASSIE").color(MUTED).build());
+		panelComponent.getChildren().add(TitleComponent.builder().text("by POWERBASSIE").color(CREDIT).build());
 
 		Step step = plugin.getStep();
 		if (config.showStep() && step != null)
