@@ -99,6 +99,13 @@ class GotrInfoOverlay extends OverlayPanel
 			if (plugin.getGamesPlayed() > 0)
 			{
 				line("Session (" + plugin.getGamesPlayed() + " games)", "+" + plugin.getSessionElemental() + " / +" + plugin.getSessionCatalytic(), GOOD);
+				double perHour = plugin.gamesPerHour();
+				if (config.showSessionRate() && perHour > 0)
+				{
+					int games = plugin.getGamesPlayed();
+					line("Per game / per hour", String.format(Locale.ROOT, "%.1f pts / %.1f games",
+						(plugin.getSessionElemental() + plugin.getSessionCatalytic()) / (double) games, perHour), Color.WHITE);
+				}
 			}
 		}
 
@@ -106,6 +113,14 @@ class GotrInfoOverlay extends OverlayPanel
 		{
 			String status = plugin.getCombinationStatus();
 			line("Combination", status, status.startsWith("YES") ? GOOD : MUTED);
+		}
+
+		if (config.showEssence() && plugin.isGameRunning())
+		{
+			int carried = plugin.essenceCarried();
+			int capacity = plugin.essenceCapacity();
+			line("Essence (pouches)", carried + "/" + capacity + " (" + plugin.pouchEssence() + ")",
+				carried >= capacity && capacity > 0 ? GOOD : Color.WHITE);
 		}
 
 		if (config.showSpec() && plugin.hasSpecPickaxe())

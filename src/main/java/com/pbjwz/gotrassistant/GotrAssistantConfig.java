@@ -287,6 +287,24 @@ public interface GotrAssistantConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(keyName = "showEssence", name = "Essence carried", description = "Essence in your inventory and pouches against what fits", position = 7, section = infoSection)
+	default boolean showEssence()
+	{
+		return true;
+	}
+
+	@ConfigItem(keyName = "showSessionRate", name = "Session rate", description = "Games per hour and average points per game this session", position = 8, section = infoSection)
+	default boolean showSessionRate()
+	{
+		return true;
+	}
+
+	@ConfigItem(keyName = "gameSummary", name = "Game summary in chat", description = "Post a short summary (points, energy, time) in your chatbox after each game. Only you can see it", position = 9, section = infoSection)
+	default boolean gameSummary()
+	{
+		return true;
+	}
+
 	// --- Timers ---
 
 	@ConfigItem(keyName = "showGameTimer", name = "Game timer", description = "Countdown to the start and time since the rift opened", position = 0, section = timerSection)

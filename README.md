@@ -23,6 +23,9 @@ A RuneLite plugin for the Guardians of the Rift minigame. It only shows informat
 - Energy this game, and progress to the 300-energy XP threshold.
 - Potential points once your stones and carried essence are handed in.
 - Banked reward points and the number of searches, plus points earned this session.
+- Session rate: games per hour and average points per game.
+- Optional summary in your chatbox after each game (points, energy, game time). Only you can see it.
+- Essence carried (inventory + pouches) against what fits.
 
 **Timers**
 - Rift countdown and game time.

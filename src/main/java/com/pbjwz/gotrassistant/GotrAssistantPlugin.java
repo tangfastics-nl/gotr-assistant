@@ -61,6 +61,10 @@ import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.chat.ChatColorType;
+import net.runelite.client.chat.ChatMessageBuilder;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -143,6 +147,9 @@ public class GotrAssistantPlugin extends Plugin
 
 	@Inject
 	private Notifier notifier;
+
+	@Inject
+	private ChatMessageManager chatMessageManager;
 
 	@Inject
 	private OverlayManager overlayManager;
@@ -285,6 +292,7 @@ public class GotrAssistantPlugin extends Plugin
 	private int sessionCatalytic;
 	@Getter(AccessLevel.PACKAGE)
 	private int gamesPlayed;
+	private long sessionStartMillis = -1;
 
 	// --- pouch wear measurement ---
 	private final Map<EssencePouch, Integer> counterAtStart = new EnumMap<>(EssencePouch.class);
@@ -986,6 +994,10 @@ public class GotrAssistantPlugin extends Plugin
 		phase = Phase.ACTIVE;
 		gameOver = false;
 		gameStartTick = client.getTickCount();
+		if (sessionStartMillis < 0)
+		{
+			sessionStartMillis = System.currentTimeMillis();
+		}
 		counterAtStart.clear();
 		for (EssencePouch pouch : pouchesHeld.keySet())
 		{
@@ -1028,18 +1040,20 @@ public class GotrAssistantPlugin extends Plugin
 
 	private void onRewardTotals(int elemental, int catalytic)
 	{
-		if (bankedElemental >= 0 && elemental >= bankedElemental && catalytic >= bankedCatalytic)
-		{
-			sessionElemental += elemental - bankedElemental;
-			sessionCatalytic += catalytic - bankedCatalytic;
-		}
-		else
-		{
-			sessionElemental += energyElemental() / 100;
-			sessionCatalytic += energyCatalytic() / 100;
-		}
+		int energyE = energyElemental();
+		int energyC = energyCatalytic();
+		int duration = secondsSinceStart();
+		boolean exact = bankedElemental >= 0 && elemental >= bankedElemental && catalytic >= bankedCatalytic;
+		int gainedE = exact ? elemental - bankedElemental : energyE / 100;
+		int gainedC = exact ? catalytic - bankedCatalytic : energyC / 100;
+		sessionElemental += gainedE;
+		sessionCatalytic += gainedC;
 		gamesPlayed++;
 		setBankedPoints(elemental, catalytic);
+		if (config.gameSummary())
+		{
+			postSummary(gainedE, gainedC, exact, energyE, energyC, duration);
+		}
 
 		for (Map.Entry<EssencePouch, Integer> entry : counterAtStart.entrySet())
 		{
@@ -1055,6 +1069,25 @@ public class GotrAssistantPlugin extends Plugin
 		resetGame();
 		phase = Phase.IDLE;
 		gameOver = true;
+	}
+
+	private void postSummary(int gainedE, int gainedC, boolean exact, int energyE, int energyC, int seconds)
+	{
+		ChatMessageBuilder message = new ChatMessageBuilder()
+			.append(ChatColorType.HIGHLIGHT)
+			.append("GOTR game " + gamesPlayed + ": ")
+			.append(ChatColorType.NORMAL)
+			.append((exact ? "+" : "~+") + gainedE + " elemental / +" + gainedC + " catalytic points, energy "
+				+ energyE + " / " + energyC);
+		if (seconds > 0)
+		{
+			message.append(", " + seconds / 60 + "m " + seconds % 60 + "s");
+		}
+		message.append(". Banked " + bankedElemental + " / " + bankedCatalytic + ".");
+		chatMessageManager.queue(QueuedMessage.builder()
+			.type(ChatMessageType.CONSOLE)
+			.runeLiteFormattedMessage(message.build())
+			.build());
 	}
 
 	private void readCheckPointsDialog()
@@ -1620,6 +1653,37 @@ public class GotrAssistantPlugin extends Plugin
 		int fromEssence = plannedGuardian != null && plannedGuardian.getAlignment() == Alignment.CATALYTIC
 			? (essence + pouchStored) * 2 : 0;
 		return energyCatalytic() + 2 * catalyticStones + 3 * polyCatalyticStones + fromEssence;
+	}
+
+	int essenceCarried()
+	{
+		return essence + pouchStored;
+	}
+
+	/**
+	 * Essence that fits in total: what is carried plus free inventory slots and free pouch space.
+	 */
+	int essenceCapacity()
+	{
+		return essence + pouchStored + freeSlots + pouchFree;
+	}
+
+	int pouchEssence()
+	{
+		return pouchStored;
+	}
+
+	/**
+	 * Games per hour since the first game this session, or -1 before the first finished game.
+	 */
+	double gamesPerHour()
+	{
+		if (gamesPlayed == 0 || sessionStartMillis < 0)
+		{
+			return -1;
+		}
+		double hours = (System.currentTimeMillis() - sessionStartMillis) / 3_600_000.0;
+		return hours <= 0 ? -1 : gamesPlayed / hours;
 	}
 
 	boolean hasSpecPickaxe()
