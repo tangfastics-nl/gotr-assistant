@@ -40,6 +40,7 @@ class GotrInfoOverlay extends OverlayPanel
 		}
 
 		panelComponent.getChildren().add(TitleComponent.builder().text("GOTR Assistant").color(config.targetColor()).build());
+		panelComponent.getChildren().add(TitleComponent.builder().text("by POWERBASSIE").color(MUTED).build());
 
 		Step step = plugin.getStep();
 		if (config.showStep() && step != null)
