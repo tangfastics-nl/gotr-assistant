@@ -40,7 +40,7 @@ class GotrInfoOverlay extends OverlayPanel
 			return null;
 		}
 
-		panelComponent.getChildren().add(TitleComponent.builder().text("GOTR Assistant").color(config.targetColor()).build());
+		panelComponent.getChildren().add(TitleComponent.builder().text("GOTR aio").color(config.targetColor()).build());
 		panelComponent.getChildren().add(new SmallTitleComponent("by POWERBASSIE", CREDIT));
 		panelComponent.getChildren().add(LineComponent.builder().left(" ").build());
 

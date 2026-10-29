@@ -75,7 +75,7 @@ import net.runelite.client.util.Text;
 
 @Slf4j
 @PluginDescriptor(
-	name = "GOTR Assistant",
+	name = "GOTR aio",
 	description = "Guardians of the Rift: step guidance, guardian highlights, points, timers, pouch wear and more",
 	tags = {"gotr", "guardians", "rift", "runecraft", "minigame", "pouch", "portal"}
 )

@@ -1,4 +1,4 @@
-# GOTR Assistant
+# GOTR aio
 
 A RuneLite plugin for the Guardians of the Rift minigame. It only shows information and highlights. It never clicks, never changes menus, and never acts for you.
 
