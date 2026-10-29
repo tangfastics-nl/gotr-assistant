@@ -860,7 +860,15 @@ public class GotrAssistantPlugin extends Plugin
 		if (config.craftCombinationRunes())
 		{
 			// Keep the runes used for combination crafting out of the deposit suggestion.
-			for (Guardian guardian : talismans)
+			Set<Guardian> keep = EnumSet.noneOf(Guardian.class);
+			keep.addAll(talismans);
+			CombinationRune preferred = config.combinationChoice().rune();
+			if (preferred != null)
+			{
+				keep.add(preferred.getFirst());
+				keep.add(preferred.getSecond());
+			}
+			for (Guardian guardian : keep)
 			{
 				depositableRunes -= elementalRunes.getOrDefault(guardian, 0);
 			}
