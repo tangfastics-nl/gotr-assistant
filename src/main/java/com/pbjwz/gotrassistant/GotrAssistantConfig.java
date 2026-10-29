@@ -320,6 +320,12 @@ public interface GotrAssistantConfig extends Config
 		return 1;
 	}
 
+	@ConfigItem(keyName = "repairViaNpcContact", name = "Repair via NPC Contact", description = "On the Lunar spellbook (67 Magic), suggest NPC Contact on the Dark Mage instead of Apprentice Cordelia, and highlight the spell", position = 4, section = pouchSection)
+	default boolean repairViaNpcContact()
+	{
+		return true;
+	}
+
 	// --- Notifications ---
 
 	@ConfigItem(keyName = "notifyGameStart", name = "Game starting", description = "Notify when the rift is about to open", position = 0, section = notificationSection)

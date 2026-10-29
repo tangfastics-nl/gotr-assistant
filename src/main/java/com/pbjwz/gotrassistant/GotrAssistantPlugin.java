@@ -103,6 +103,8 @@ public class GotrAssistantPlugin extends Plugin
 	private static final int GOTR_HUD_SCRIPT = 5980;
 	private static final int QUEST_CHECK_INTERVAL = 100;
 	private static final int XP_ENERGY_THRESHOLD = 300;
+	private static final int LUNAR_SPELLBOOK = 2;
+	private static final int NPC_CONTACT_LEVEL = 67;
 	// Ticks away from the temple before the game state is dropped; covers scene loads when entering altars.
 	private static final int OUTSIDE_GRACE_TICKS = 5;
 	static final String HINT_UNCHARGED_CELL = "Take an uncharged cell first";
@@ -153,6 +155,9 @@ public class GotrAssistantPlugin extends Plugin
 
 	@Inject
 	private GotrPouchOverlay pouchOverlay;
+
+	@Inject
+	private GotrSpellOverlay spellOverlay;
 
 	// --- scene ---
 	@Getter(AccessLevel.PACKAGE)
@@ -290,6 +295,7 @@ public class GotrAssistantPlugin extends Plugin
 		overlayManager.add(infoOverlay);
 		overlayManager.add(sceneOverlay);
 		overlayManager.add(pouchOverlay);
+		overlayManager.add(spellOverlay);
 		loadBankedPoints();
 		clientThread.invokeLater(() -> readWorn(client.getItemContainer(InventoryID.WORN)));
 	}
@@ -300,6 +306,7 @@ public class GotrAssistantPlugin extends Plugin
 		overlayManager.remove(infoOverlay);
 		overlayManager.remove(sceneOverlay);
 		overlayManager.remove(pouchOverlay);
+		overlayManager.remove(spellOverlay);
 		clearHintArrow();
 		clearScene();
 		resetGame();
@@ -601,7 +608,8 @@ public class GotrAssistantPlugin extends Plugin
 			repairChecked = true;
 			if (pouchRepairNeeded())
 			{
-				notifier.notify(config.notifyPouchRepair(), "GOTR: your essence pouches need repairing");
+				notifier.notify(config.notifyPouchRepair(), "GOTR: your essence pouches need repairing"
+					+ (repairViaNpcContact() ? " (NPC Contact)" : ""));
 			}
 		}
 		updatePortalDirection();
@@ -931,6 +939,16 @@ public class GotrAssistantPlugin extends Plugin
 		return config.fillsPerGame() * capacity;
 	}
 
+	/**
+	 * Lunar spellbook with the Magic level for NPC Contact: the Dark Mage repairs pouches from anywhere.
+	 */
+	boolean repairViaNpcContact()
+	{
+		return config.repairViaNpcContact()
+			&& client.getVarbitValue(VarbitID.SPELLBOOK) == LUNAR_SPELLBOOK
+			&& client.getBoostedSkillLevel(Skill.MAGIC) >= NPC_CONTACT_LEVEL;
+	}
+
 	boolean pouchRepairNeeded()
 	{
 		for (PouchStatus status : pouches)
@@ -1222,6 +1240,10 @@ public class GotrAssistantPlugin extends Plugin
 		{
 			if (repair)
 			{
+				if (repairViaNpcContact())
+				{
+					return Step.of(Step.Kind.REPAIR_POUCHES, "Cast NPC Contact on the Dark Mage to repair your pouches");
+				}
 				return Step.at(Step.Kind.REPAIR_POUCHES, "Repair your pouches at Apprentice Cordelia", cordelia);
 			}
 			if (phase == Phase.COUNTDOWN)
@@ -1234,7 +1256,9 @@ public class GotrAssistantPlugin extends Plugin
 
 		if (repair)
 		{
-			hints.add("A pouch needs repair soon (Apprentice Cordelia)");
+			hints.add(repairViaNpcContact()
+				? "A pouch needs repair - cast NPC Contact on the Dark Mage"
+				: "A pouch needs repair soon (Apprentice Cordelia)");
 		}
 		if (config.craftCombinationRunes() && !bindingWorn)
 		{

@@ -31,6 +31,7 @@ A RuneLite plugin for the Guardians of the Rift minigame. It only shows informat
 **Essence pouches**
 - Stored/capacity for each pouch, shown in the panel and on the inventory icon.
 - Wear per pouch, read from the game's degradation counter, with the estimated number of games until a repair is needed.
+- Repair advice: on the Lunar spellbook with 67 Magic it suggests NPC Contact on the Dark Mage and highlights the spell. Otherwise it points to Apprentice Cordelia.
 
 **Pickaxe special attack**
 - Special attack energy for dragon, infernal, crystal, 3rd age and trailblazer pickaxes, with a "use it now" hint while mining.

@@ -97,7 +97,7 @@ class GotrSceneOverlay extends Overlay
 		{
 			outline(graphics, plugin.getUnchargedCellTable(), width, Color.WHITE);
 		}
-		if (plugin.pouchRepairNeeded() && plugin.getCordelia() != null && !plugin.isGameRunning())
+		if (plugin.pouchRepairNeeded() && plugin.getCordelia() != null && !plugin.isGameRunning() && !plugin.repairViaNpcContact())
 		{
 			outlines.drawOutline(plugin.getCordelia(), width, Color.ORANGE, FEATHER);
 		}
