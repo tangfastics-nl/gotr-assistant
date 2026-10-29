@@ -1,6 +1,8 @@
 package com.pbjwz.gotrassistant;
 
+import com.pbjwz.gotrassistant.model.CombinationRune;
 import java.awt.Color;
+import javax.annotation.Nullable;
 import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
@@ -20,6 +22,23 @@ public interface GotrAssistantConfig extends Config
 		BALANCED,
 		MOST_ENERGY,
 		HIGHEST_CELL_TIER
+	}
+
+	enum CombinationChoice
+	{
+		ANY,
+		MIST,
+		DUST,
+		MUD,
+		SMOKE,
+		STEAM,
+		LAVA;
+
+		@Nullable
+		CombinationRune rune()
+		{
+			return this == ANY ? null : CombinationRune.valueOf(name());
+		}
 	}
 
 	enum GuardianColorMode
@@ -78,38 +97,50 @@ public interface GotrAssistantConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(keyName = "combinationChoice", name = "Combination rune", description = "Which combination rune to make. Any: whatever your carried runes allow at the active elemental guardian", position = 5, section = guidanceSection)
+	default CombinationChoice combinationChoice()
+	{
+		return CombinationChoice.ANY;
+	}
+
+	@ConfigItem(keyName = "highlightCombinationItems", name = "Highlight combination items", description = "Highlight the runes, talisman and binding necklace needed for the chosen combination rune in your inventory", position = 6, section = guidanceSection)
+	default boolean highlightCombinationItems()
+	{
+		return true;
+	}
+
 	@Range(max = 200)
-	@ConfigItem(keyName = "fragmentTarget", name = "Fragments to mine", description = "Fragments to mine before crafting essence. 0 = enough to fill your inventory and pouches", position = 5, section = guidanceSection)
+	@ConfigItem(keyName = "fragmentTarget", name = "Fragments to mine", description = "Fragments to mine before crafting essence. 0 = enough to fill your inventory and pouches", position = 7, section = guidanceSection)
 	default int fragmentTarget()
 	{
 		return 0;
 	}
 
-	@ConfigItem(keyName = "usePortal", name = "Suggest the portal", description = "Suggest the portal to the huge guardian remains while it is open", position = 6, section = guidanceSection)
+	@ConfigItem(keyName = "usePortal", name = "Suggest the portal", description = "Suggest the portal to the huge guardian remains while it is open", position = 8, section = guidanceSection)
 	default boolean usePortal()
 	{
 		return true;
 	}
 
-	@ConfigItem(keyName = "buildGuardians", name = "Suggest building guardians", description = "Suggest building a guardian at an essence pile when you have a chisel and a charged cell", position = 7, section = guidanceSection)
+	@ConfigItem(keyName = "buildGuardians", name = "Suggest building guardians", description = "Suggest building a guardian at an essence pile when you have a chisel and a charged cell", position = 9, section = guidanceSection)
 	default boolean buildGuardians()
 	{
 		return true;
 	}
 
-	@ConfigItem(keyName = "placeCells", name = "Suggest placing cells", description = "Suggest placing charged cells on the cell tiles", position = 8, section = guidanceSection)
+	@ConfigItem(keyName = "placeCells", name = "Suggest placing cells", description = "Suggest placing charged cells on the cell tiles", position = 10, section = guidanceSection)
 	default boolean placeCells()
 	{
 		return true;
 	}
 
-	@ConfigItem(keyName = "depositRunes", name = "Suggest depositing runes", description = "Suggest depositing crafted runes in the deposit pool", position = 9, section = guidanceSection)
+	@ConfigItem(keyName = "depositRunes", name = "Suggest depositing runes", description = "Suggest depositing crafted runes in the deposit pool", position = 11, section = guidanceSection)
 	default boolean depositRunes()
 	{
 		return true;
 	}
 
-	@ConfigItem(keyName = "unchargedCellReminder", name = "Uncharged cell reminder", description = "Remind you to take an uncharged cell before entering an altar", position = 10, section = guidanceSection)
+	@ConfigItem(keyName = "unchargedCellReminder", name = "Uncharged cell reminder", description = "Remind you to take an uncharged cell before entering an altar", position = 12, section = guidanceSection)
 	default boolean unchargedCellReminder()
 	{
 		return true;

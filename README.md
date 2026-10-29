@@ -11,6 +11,7 @@ A RuneLite plugin for the Guardians of the Rift minigame. It only shows informat
 
 **Combination runes**
 - A toggle turns combination runes on or off. When on, the panel shows *YES/NO* and the reason. It checks for a binding necklace, runes of the other element, the talisman (or Magic Imbue) and the required level.
+- Choose which combination rune to make (Any, Mist, Dust, Mud, Smoke, Steam, Lava). The runes, talisman and binding necklace you need are outlined in your inventory, and the guardian label shows the combination rune you can make there.
 
 **Highlights**
 - The active guardians, coloured by cell tier or alignment, with labels and the time until rotation. Guardians you cannot enter are shown in red.

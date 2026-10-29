@@ -141,7 +141,9 @@ class GotrSceneOverlay extends Overlay
 			{
 				String text = guardian.getLabel() + " - " + guardian.getCellTier().getLabel()
 					+ (rotation >= 0 ? " " + String.format(Locale.ROOT, "%d:%02d", rotation / 60, rotation % 60) : "")
-					+ (locked ? " (locked)" : "");
+					+ (locked ? " (locked)" : "")
+					+ (guardian == plugin.getActiveElemental() && plugin.getActiveCombination() != null
+						? " + " + plugin.getActiveCombination().getLabel() : "");
 				Point at = object.getCanvasTextLocation(graphics, text, 200);
 				if (at != null)
 				{

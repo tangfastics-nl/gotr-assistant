@@ -159,6 +159,9 @@ public class GotrAssistantPlugin extends Plugin
 	@Inject
 	private GotrSpellOverlay spellOverlay;
 
+	@Inject
+	private GotrRuneOverlay runeOverlay;
+
 	// --- scene ---
 	@Getter(AccessLevel.PACKAGE)
 	private final Map<Guardian, GameObject> portalGuardians = new EnumMap<>(Guardian.class);
@@ -257,6 +260,10 @@ public class GotrAssistantPlugin extends Plugin
 	private CombinationRune plannedCombination;
 	@Getter(AccessLevel.PACKAGE)
 	private String combinationStatus;
+	@Getter(AccessLevel.PACKAGE)
+	private CombinationRune activeCombination;
+	@Getter(AccessLevel.PACKAGE)
+	private final Set<Integer> combinationItems = new HashSet<>();
 	private int pouchFree;
 	private int pouchStored;
 	private boolean converting;
@@ -296,6 +303,7 @@ public class GotrAssistantPlugin extends Plugin
 		overlayManager.add(sceneOverlay);
 		overlayManager.add(pouchOverlay);
 		overlayManager.add(spellOverlay);
+		overlayManager.add(runeOverlay);
 		loadBankedPoints();
 		clientThread.invokeLater(() -> readWorn(client.getItemContainer(InventoryID.WORN)));
 	}
@@ -307,6 +315,7 @@ public class GotrAssistantPlugin extends Plugin
 		overlayManager.remove(sceneOverlay);
 		overlayManager.remove(pouchOverlay);
 		overlayManager.remove(spellOverlay);
+		overlayManager.remove(runeOverlay);
 		clearHintArrow();
 		clearScene();
 		resetGame();
@@ -1098,7 +1107,7 @@ public class GotrAssistantPlugin extends Plugin
 
 	/**
 	 * Combination rune that can be made at this elemental guardian with what is carried, or null.
-	 * The reason it cannot is stored in {@link #combinationStatus} for the active elemental guardian.
+	 * With describe set, the reason is stored in {@link #combinationStatus}.
 	 */
 	@Nullable
 	private CombinationRune combinationAt(@Nullable Guardian guardian, boolean describe)
@@ -1107,48 +1116,124 @@ public class GotrAssistantPlugin extends Plugin
 		{
 			return null;
 		}
-		if (!bindingWorn)
+		CombinationRune preferred = config.combinationChoice().rune();
+		String reason;
+		CombinationRune found = null;
+		if (preferred != null)
 		{
-			if (describe)
-			{
-				combinationStatus = "NO - wear a binding necklace";
-			}
-			return null;
+			Guardian carried = otherElement(preferred, guardian);
+			reason = carried == null
+				? preferred.getLabel() + " is made at " + preferred.getFirst().getLabel() + " or " + preferred.getSecond().getLabel()
+				: missingFor(preferred, carried);
+			found = reason == null ? preferred : null;
 		}
-		boolean imbue = client.getVarbitValue(VarbitID.MAGIC_IMBUE_ACTIVE) > 0;
-		String missing = null;
-		for (Guardian carried : Guardian.values())
+		else
 		{
-			if (carried == guardian || carried.getAlignment() != Alignment.ELEMENTAL || elementalRunes.getOrDefault(carried, 0) <= 0)
+			reason = "carry runes of another element";
+			for (Guardian carried : Guardian.values())
 			{
-				continue;
+				if (carried == guardian || carried.getAlignment() != Alignment.ELEMENTAL || elementalRunes.getOrDefault(carried, 0) <= 0)
+				{
+					continue;
+				}
+				CombinationRune rune = CombinationRune.of(guardian, carried);
+				if (rune == null)
+				{
+					continue;
+				}
+				String missing = missingFor(rune, carried);
+				if (missing == null)
+				{
+					found = rune;
+					break;
+				}
+				reason = missing;
 			}
-			CombinationRune rune = CombinationRune.of(guardian, carried);
-			if (rune == null)
-			{
-				continue;
-			}
-			if (rune.getLevelRequired() > runecraftLevel())
-			{
-				missing = rune.getLabel() + " needs level " + rune.getLevelRequired();
-				continue;
-			}
-			if (!imbue && !talismans.contains(carried))
-			{
-				missing = "bring a " + carried.getLabel().toLowerCase() + " talisman or Magic Imbue";
-				continue;
-			}
-			if (describe)
-			{
-				combinationStatus = "YES - " + rune.getLabel() + " runes at " + guardian.getLabel();
-			}
-			return rune;
+		}
+		if (found != null && !bindingWorn)
+		{
+			reason = "wear a binding necklace";
+			found = null;
 		}
 		if (describe)
 		{
-			combinationStatus = "NO - " + (missing != null ? missing : "carry runes of another element");
+			combinationStatus = found != null
+				? "YES - " + found.getLabel() + " runes at " + guardian.getLabel()
+				: "NO - " + reason;
+		}
+		return found;
+	}
+
+	/**
+	 * What is missing to craft {@code rune} while carrying runes of {@code carried}, or null if nothing.
+	 */
+	@Nullable
+	private String missingFor(CombinationRune rune, Guardian carried)
+	{
+		if (rune.getLevelRequired() > runecraftLevel())
+		{
+			return rune.getLabel() + " needs level " + rune.getLevelRequired();
+		}
+		if (elementalRunes.getOrDefault(carried, 0) <= 0)
+		{
+			return "carry " + carried.getLabel().toLowerCase() + " runes";
+		}
+		if (client.getVarbitValue(VarbitID.MAGIC_IMBUE_ACTIVE) <= 0 && !talismans.contains(carried))
+		{
+			return "bring a " + carried.getLabel().toLowerCase() + " talisman or Magic Imbue";
 		}
 		return null;
+	}
+
+	@Nullable
+	private static Guardian otherElement(CombinationRune rune, Guardian altar)
+	{
+		if (rune.getFirst() == altar)
+		{
+			return rune.getSecond();
+		}
+		return rune.getSecond() == altar ? rune.getFirst() : null;
+	}
+
+	/**
+	 * Inventory items needed for the chosen combination rune: the carried element's runes and talisman,
+	 * plus a binding necklace when none is worn.
+	 */
+	private void updateCombinationItems(@Nullable CombinationRune possible)
+	{
+		combinationItems.clear();
+		if (!config.craftCombinationRunes() || !config.highlightCombinationItems())
+		{
+			return;
+		}
+		CombinationRune target = config.combinationChoice().rune();
+		if (target == null)
+		{
+			target = possible;
+		}
+		List<Guardian> carried = new ArrayList<>(2);
+		if (target != null)
+		{
+			Guardian other = activeElemental == null ? null : otherElement(target, activeElemental);
+			if (other != null)
+			{
+				carried.add(other);
+			}
+			else
+			{
+				carried.add(target.getFirst());
+				carried.add(target.getSecond());
+			}
+		}
+		for (Guardian guardian : carried)
+		{
+			combinationItems.add(guardian.getRuneItemId());
+			combinationItems.add(guardian.getTalismanItemId());
+		}
+		if (!bindingWorn)
+		{
+			combinationItems.add(ItemID.MAGIC_EMERALD_NECKLACE);
+		}
 	}
 
 	private int energyPerEssence(Guardian guardian)
@@ -1162,6 +1247,8 @@ public class GotrAssistantPlugin extends Plugin
 			? (activeElemental == null ? "NO - no active elemental guardian" : null)
 			: "OFF";
 		CombinationRune combo = combinationAt(activeElemental, true);
+		activeCombination = combo;
+		updateCombinationItems(combo);
 		if (combinationStatus == null)
 		{
 			combinationStatus = "NO";
